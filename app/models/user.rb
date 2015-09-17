@@ -1,3 +1,15 @@
+# == Schema Information
+#
+# Table name: users
+#
+#  id              :integer          not null, primary key
+#  user_name       :string(255)      not null
+#  password_digest :string(255)      not null
+#  session_token   :string(255)      not null
+#  created_at      :datetime
+#  updated_at      :datetime
+#
+
 class User < ActiveRecord::Base
   attr_reader :password
   after_initialize :ensure_session_token
@@ -7,6 +19,20 @@ class User < ActiveRecord::Base
   validates :user_name, presence: true, uniqueness: true
 
   validates :password, length: { minimum: 6, allow_nil: true }
+
+  has_many(
+    :cats,
+    class_name: 'Cat',
+    foreign_key: :owner_id
+    )
+
+  has_many :received_rental_requests, through: :cats, source: :rental_requests
+
+  has_many(
+    :placed_rental_requests,
+    class_name: 'CatRentalRequest',
+    foreign_key: :renter_id
+  )
 
   def self.find_by_credentials(user_name, password)
     user = User.find_by_user_name(user_name)
@@ -18,7 +44,9 @@ class User < ActiveRecord::Base
   end
 
   def reset_session_token!
-    self.session_token = SecureRandom.urlsafe_base64
+    token = SecureRandom.urlsafe_base64
+    self.update(session_token: token)
+    token
   end
 
   def password=(password)

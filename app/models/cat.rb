@@ -1,3 +1,18 @@
+# == Schema Information
+#
+# Table name: cats
+#
+#  id          :integer          not null, primary key
+#  birth_date  :date             not null
+#  color       :string(255)      not null
+#  name        :string(255)      not null
+#  sex         :string(1)        not null
+#  description :text
+#  created_at  :datetime
+#  updated_at  :datetime
+#  user_id     :integer          not null
+#
+
 require 'action_view'
 
 class Cat < ActiveRecord::Base
@@ -5,10 +20,22 @@ class Cat < ActiveRecord::Base
 
   CAT_COLORS = %w(black white orange brown)
 
+  belongs_to(
+    :owner,
+    class_name: 'User',
+    foreign_key: :user_id
+  )
+
   has_many(
     :rental_requests,
     class_name: "CatRentalRequest",
     dependent: :destroy
+  )
+
+  has_many(
+    :renters,
+    through: :placed_rental_requests,
+    source: :renter
   )
 
   validates(
@@ -16,6 +43,7 @@ class Cat < ActiveRecord::Base
     :color,
     :name,
     :sex,
+    :user_id,
     presence: true
   )
 
